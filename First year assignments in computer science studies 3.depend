@@ -1,0 +1,45 @@
+# depslib dependency file v1.0
+1678219670 source:c:\users\hp\desktop\programy na github\c++\programs\first year assignments in computer science studies 3\zadania 2.2\main.cpp
+	<iostream>
+	<cstdio>
+	<ctime>
+	<iomanip>
+	<algorithm>
+
+1742086384 source:f:\my portafolio it ulepszona\c++\programs\first year assignments in computer science studies 3\main.cpp
+	<iostream>
+	<iomanip>
+	<stdexcept>
+	<limits>
+	"array_utils.h"
+	"logger.h"
+	"file_handler.h"
+
+1742009336 f:\my portafolio it ulepszona\c++\programs\first year assignments in computer science studies 3\array_utils.h
+	<vector>
+	<algorithm>
+	<stdexcept>
+
+1742085852 f:\my portafolio it ulepszona\c++\programs\first year assignments in computer science studies 3\logger.h
+	<string>
+	<fstream>
+	<ctime>
+
+1742085852 f:\my portafolio it ulepszona\c++\programs\first year assignments in computer science studies 3\file_handler.h
+	<string>
+	<vector>
+
+1742085848 source:f:\my portafolio it ulepszona\c++\programs\first year assignments in computer science studies 3\array_utils.cpp
+	"array_utils.h"
+	<random>
+	<iostream>
+
+1742085850 source:f:\my portafolio it ulepszona\c++\programs\first year assignments in computer science studies 3\logger.cpp
+	"logger.h"
+	<iostream>
+
+1742086206 source:f:\my portafolio it ulepszona\c++\programs\first year assignments in computer science studies 3\file_handler.cpp
+	"file_handler.h"
+	<fstream>
+	<stdexcept>
+
