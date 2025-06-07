@@ -1,191 +1,188 @@
 #include <iostream>
 #include <iomanip>
-#include <stdexcept>
-#include <limits>
-#include "array_utils.h"
+#include <cstdlib>
+#include <conio.h>
+#include <vector>
+#include <string>
 #include "logger.h"
 #include "file_handler.h"
+#include "array_utils.h"
 
-#define N 12
+#ifdef _WIN32
+  #define CLEAR_CMD "cls"
+#else
+  #define CLEAR_CMD "clear"
+#endif
 
-// Color codes
-#define RESET   "\033[0m"
-#define RED     "\033[31m"
-#define GREEN   "\033[32m"
-#define YELLOW  "\033[33m"
-#define CYAN    "\033[36m"
-#define WHITE   "\033[37;1m"
+// ANSI color codes
+const std::string RESET  = "\033[0m";
+const std::string RED    = "\033[31m";
+const std::string GREEN  = "\033[32m";
+const std::string YELLOW = "\033[33m";
+const std::string CYAN   = "\033[36m";
+const std::string WHITE  = "\033[97m";
 
-/*
-Array Analysis Program v1.0
----------------------------
-This program provides the following functionalities:
+// Configuration
+const int DEFAULT_SIZE = 10;
+const int MIN_VALUE    = 0;
+const int MAX_VALUE    = 100;
 
-1. Generate Arrays:
-   - Creates three arrays (X, Y, Z) with random numbers
-   - User can specify the range for random numbers
+// Helper prototypes
+void clearScreen();
+void pause();
+void displayHeader(const std::string &title);
+void displayMenu();
+int getInt(const std::string &prompt, int min, int max);
+void optionGenerate();
+void optionView();
+void optionMean();
+void optionAboveMean();
+void optionSaveLoad();
+void optionAbout();
 
-2. Display Arrays:
-   - Shows all three arrays in a formatted way
-   - Numbers are displayed in an organized layout
+// Global array storage
+static int g_array[DEFAULT_SIZE];
+static int g_size = DEFAULT_SIZE;
 
-3. Calculate Statistics:
-   - Computes arithmetic mean of array X
-   - Counts elements above the mean
-   - Displays statistical results
+int main() {
+    Logger::init("array_system.log");
+    Logger::log("Program started");
 
-4. Save Results:
-   - Saves statistical results to a file
-   - File name: "results.txt"
-
-5. Load Previous Results:
-   - Loads previously saved array data
-   - Displays loaded data from "saved_array.txt"
-
-0. Exit Program:
-   - Safely closes the program
-   - Saves log information
-
-Navigation: Press Enter to return to main menu after each operation
-*/
+    while (true) {
+        clearScreen();
+        displayMenu();
+        int choice = getInt("Select option (0-6): ", 0, 6);
+        switch (choice) {
+            case 1: optionGenerate();   break;
+            case 2: optionView();       break;
+            case 3: optionMean();       break;
+            case 4: optionAboveMean();  break;
+            case 5: optionSaveLoad();   break;
+            case 6: optionAbout();      break;
+            case 0:
+                Logger::log("Program exiting");
+                return 0;
+        }
+        pause();
+    }
+}
 
 void clearScreen() {
-    #ifdef _WIN32
-        system("cls");
-    #else
-        system("clear");
-    #endif
+    std::system(CLEAR_CMD);
 }
 
-void displayHeader() {
-    clearScreen();
-    std::cout << WHITE << "\n"
-              << "+------------------------------------------------+\n"
-              << "|              Array Analysis Program             |\n"
-              << "|                                                |\n"
-              << "| " << CYAN << "Description:" << WHITE << "                                   |\n"
-              << "| " << CYAN << "This program handles operations on arrays:" << WHITE << "     |\n"
-              << "| " << CYAN << "- Generates random numbers" << WHITE << "                     |\n"
-              << "| " << CYAN << "- Calculates statistics" << WHITE << "                        |\n"
-              << "| " << CYAN << "- Saves and loads results" << WHITE << "                      |\n"
-              << "+------------------------------------------------+\n"
-              << RESET << std::endl;
+void pause() {
+    std::cout << YELLOW << "\nPress any key to continue..." << RESET;
+    _getch();
 }
 
-void waitForEnter() {
-    std::cout << GREEN << "\nPress Enter to return to menu..." << RESET;
-    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-    std::cin.get();
+void displayHeader(const std::string &title) {
     clearScreen();
+    std::cout << CYAN
+              << R"(
+   ___   ____   _____  ____
+  / _ \ / ___| | ____|/ ___|
+ | | | | |  _  |  _|  \___ \
+ | |_| | |_| | | |___  ___) |
+  \__\_\\____| |_____|____/
+)" << RESET
+              << WHITE << "\n    " << title << "\n\n" << RESET;
 }
 
 void displayMenu() {
+    displayHeader("ARRAY SYSTEM");
+    std::cout << CYAN
+              << "+----------------------------------+\n"
+              << "|          MAIN MENU               |\n"
+              << "+----------------------------------+\n"
+              << RESET;
     std::cout << GREEN
-              << "\nAvailable options:\n"
-              << "\n1. Generate new arrays"
-              << " - Fill X, Y, Z arrays with random numbers"
-              << "\n2. Display arrays"
-              << " - Show content of all arrays"
-              << "\n3. Calculate statistics"
-              << " - Calculate mean and count elements above mean"
-              << "\n4. Save results"
-              << " - Save current results to file"
-              << "\n5. Load previous results"
-              << "\n0. Exit program"
-              << YELLOW << "\n\nEnter your choice (0-5): " << RESET;
+              << " 1) Generate random array\n"
+              << " 2) View array contents\n"
+              << " 3) Calculate mean\n"
+              << " 4) Count above mean\n"
+              << " 5) Save/load from file\n"
+              << " 6) About author\n"
+              << " 0) Exit\n"
+              << RESET;
 }
 
-int main() {
-    try {
-        Logger::init();
-        Logger::log("Program started");
-
-        int X[N], Y[N], Z[N];  // Removed unused Q array
-        int choice;
-        double mean = 0;
-        int countAboveMean = 0;
-
-        do {
-            displayHeader();
-            displayMenu();
-            
-            if (!(std::cin >> choice)) {
-                std::cin.clear();
-                std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-                std::cout << RED << "\nInvalid input! Please enter a number." << RESET;
-                waitForEnter();
-                continue;
-            }
-
-            clearScreen();
-            switch(choice) {
-                case 1: {
-                    std::cout << WHITE << "\n=== Generating Arrays ===" << RESET << "\n\n";
-                    int p, k;
-                    std::cout << YELLOW << "Enter range <p,k>: " << RESET;
-                    std::cin >> p >> k;
-                    
-                    ArrayUtils::fillArray(X, N, p, k);
-                    ArrayUtils::fillArray(Y, N, p, k);
-                    ArrayUtils::fillArray(Z, N, p, k);
-                    Logger::log("Arrays generated successfully");
-                    std::cout << GREEN << "\nArrays generated successfully!" << RESET;
-                    waitForEnter();
-                    break;
-                }
-                case 2: {
-                    std::cout << WHITE << "\n=== Displaying Arrays ===" << RESET << "\n\n";
-                    std::cout << WHITE << "\nArray X: " << RESET;
-                    ArrayUtils::printArray(X, N);
-                    std::cout << WHITE << "Array Y: " << RESET;
-                    ArrayUtils::printArray(Y, N);
-                    std::cout << WHITE << "Array Z: " << RESET;
-                    ArrayUtils::printArray(Z, N);
-                    waitForEnter();
-                    break;
-                }
-                case 3: {
-                    std::cout << WHITE << "\n=== Calculating Statistics ===" << RESET << "\n\n";
-                    mean = ArrayUtils::calculateMean(X, N);
-                    countAboveMean = ArrayUtils::countElementsAboveMean(X, N, mean);
-                    std::cout << "Mean: " << mean << "\nElements above mean: " << countAboveMean << std::endl;
-                    waitForEnter();
-                    break;
-                }
-                case 4: {
-                    std::cout << WHITE << "\n=== Saving Results ===" << RESET << "\n\n";
-                    FileHandler::saveResults("results.txt", mean, countAboveMean);
-                    Logger::log("Results saved to file");
-                    std::cout << GREEN << "\nResults saved successfully!" << RESET;
-                    waitForEnter();
-                    break;
-                }
-                case 5: {
-                    std::cout << WHITE << "\n=== Loading Previous Results ===" << RESET << "\n\n";
-                    std::vector<int> loaded = FileHandler::loadArrayFromFile("saved_array.txt");
-                    std::cout << "Loaded array: ";
-                    for (int val : loaded) std::cout << val << " ";
-                    std::cout << std::endl;
-                    waitForEnter();
-                    break;
-                }
-                case 0:
-                    std::cout << GREEN << "\nThank you for using Array Analysis Program!\n" << RESET;
-                    waitForEnter();
-                    break;
-                default:
-                    std::cout << RED << "\nInvalid choice! Please enter a number between 0 and 5." << RESET;
-                    waitForEnter();
-            }
-        } while (choice != 0);
-
-        Logger::log("Program ended normally");
+int getInt(const std::string &prompt, int min, int max) {
+    int v;
+    while (true) {
+        std::cout << YELLOW << prompt << RESET;
+        if (std::cin >> v && v >= min && v <= max) {
+            return v;
+        }
+        std::cin.clear();
+        std::cin.ignore(10000, '\n');
+        std::cout << RED << "Invalid input, enter " << min << "-" << max << "." << RESET << "\n";
+        Logger::error("Invalid menu input");
     }
-    catch (const std::exception& e) {
-        Logger::error(e.what());
-        std::cerr << RED << "Error: " << e.what() << RESET << std::endl;
-        return 1;
-    }
+}
 
-    return 0;
+void optionGenerate() {
+    displayHeader("GENERATE ARRAY");
+    ArrayUtils::fillArray(g_array, g_size, MIN_VALUE, MAX_VALUE);
+    std::cout << GREEN << "Array generated with " << g_size << " elements.\n" << RESET;
+    Logger::log("Array generated");
+}
+
+void optionView() {
+    displayHeader("VIEW ARRAY");
+    std::cout << WHITE;
+    ArrayUtils::printArray(g_array, g_size);
+    std::cout << RESET;
+    Logger::log("Array viewed");
+}
+
+void optionMean() {
+    displayHeader("CALCULATE MEAN");
+    double mean = ArrayUtils::calculateMean(g_array, g_size);
+    std::cout << GREEN << "Mean value: " << std::fixed << std::setprecision(2) << mean << "\n" << RESET;
+    Logger::log("Mean calculated: " + std::to_string(mean));
+}
+
+void optionAboveMean() {
+    displayHeader("COUNT ABOVE MEAN");
+    double mean = ArrayUtils::calculateMean(g_array, g_size);
+    int count = ArrayUtils::countElementsAboveMean(g_array, g_size, mean);
+    std::cout << GREEN << "Elements > mean (" << mean << "): " << count << "\n" << RESET;
+    Logger::log("Count above mean: " + std::to_string(count));
+}
+
+void optionSaveLoad() {
+    displayHeader("SAVE / LOAD");
+    std::cout << CYAN
+              << "1) Save array to file\n"
+              << "2) Load array from file\n"
+              << RESET;
+    int c = getInt("Choice (1-2): ", 1, 2);
+    if (c == 1) {
+        FileHandler::saveArrayToFile(g_array, g_size, "array_data.txt");
+        std::cout << GREEN << "Array saved to array_data.txt\n" << RESET;
+        Logger::log("Array saved");
+    } else {
+        auto v = FileHandler::loadArrayFromFile("array_data.txt");
+        if (!v.empty() && (int)v.size() == g_size) {
+            for (int i = 0; i < g_size; ++i) g_array[i] = v[i];
+            std::cout << GREEN << "Array loaded from file\n" << RESET;
+            Logger::log("Array loaded");
+        } else {
+            std::cout << RED << "Failed to load or incorrect size\n" << RESET;
+            Logger::error("Load failed or size mismatch");
+        }
+    }
+}
+
+void optionAbout() {
+    displayHeader("ABOUT AUTHOR");
+    std::cout << WHITE
+              << "Adrian Lesniak\n"
+              << "C++ Developer & Enthusiast\n"
+              << "This program demonstrates array handling,\n"
+              << "statistics, and file I/O with a colorful\n"
+              << "ASCII interface.\n\n"
+              << RESET;
+    Logger::log("Displayed about author");
 }
